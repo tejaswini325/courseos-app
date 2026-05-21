@@ -19,18 +19,9 @@ spec:
       previewService: courseos-preview-svc
       # Automatically cut over traffic if analysis passes
       autoPromotionEnabled: true
-      # The secret weapon: Test the green environment before swapping traffic
+      # Corrected antiAffinity syntax for native Argo Rollout specification
       antiAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                  - key: app
-                    operator: In
-                    values:
-                      - courseos-engine
-              topologyKey: kubernetes.io/hostname
+        preferredDuringSchedulingIgnoredDuringExecution: {}
   template:
     metadata:
       labels:
