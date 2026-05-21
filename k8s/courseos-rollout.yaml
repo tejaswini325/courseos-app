@@ -19,9 +19,9 @@ spec:
       previewService: courseos-preview-svc
       # Automatically cut over traffic if analysis passes
       autoPromotionEnabled: true
-      # Corrected antiAffinity syntax for native Argo Rollout specification
+      # Corrected explicit anti-affinity layout for Argo schemas
       antiAffinity:
-        preferredDuringSchedulingIgnoredDuringExecution: {}
+        requiredDuringSchedulingIgnoredDuringExecution: {}
   template:
     metadata:
       labels:
@@ -29,7 +29,6 @@ spec:
     spec:
       containers:
       - name: courseos-container
-        # Replace with your Docker Hub/Registry username once you build and push
         image: docker.io/YOUR_DOCKER_USERNAME/courseos:v1.0.0-blue
         imagePullPolicy: IfNotPresent
         ports:
