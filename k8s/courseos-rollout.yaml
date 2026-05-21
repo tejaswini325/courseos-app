@@ -1,0 +1,63 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: courseos-rollout
+  namespace: production
+  labels:
+    app: courseos-engine
+spec:
+  replicas: 3 # High availability setup
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: courseos-engine
+  strategy:
+    blueGreen:
+      # Active service handles live user traffic (Blue)
+      activeService: courseos-active-svc
+      # Preview service handles new code verification (Green)
+      previewService: courseos-preview-svc
+      # Automatically cut over traffic if analysis passes
+      autoPromotionEnabled: true
+      # The secret weapon: Test the green environment before swapping traffic
+      antiAffinity:
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - courseos-engine
+              topologyKey: kubernetes.io/hostname
+  template:
+    metadata:
+      labels:
+        app: courseos-engine
+    spec:
+      containers:
+      - name: courseos-container
+        # Replace with your Docker Hub/Registry username once you build and push
+        image: docker.io/YOUR_DOCKER_USERNAME/courseos:v1.0.0-blue
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: APP_VERSION
+          value: "v1.0.0-blue"
+        - name: REDIS_URL
+          value: "redis://redis-svc.production.svc.cluster.local:6379"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5

@@ -1,0 +1,19 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: courseos-success-rate
+  namespace: production
+spec:
+  metrics:
+  - name: success-rate
+    interval: 20s
+    # The rollout fails if the error rate exceeds 1% (0.01)
+    successCondition: result[0] <= 0.01
+    failureLimit: 1
+    provider:
+      prometheus:
+        address: http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          sum(rate(courseos_http_requests_total{status_code=~"5.*", namespace="production"}[1m]))
+          /
+          (sum(rate(courseos_http_requests_total{namespace="production"}[1m])) + 0.001)
